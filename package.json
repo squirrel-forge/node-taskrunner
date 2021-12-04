@@ -1,0 +1,32 @@
+{
+  "name": "@squirrel-forge/node-taskrunner",
+  "version": "0.5.0",
+  "description": "Task runner and task class for sequential and parallel processing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/squirrel-forge/node-taskrunner.git"
+  },
+  "keywords": [
+    "node",
+    "abstract",
+    "taskrunner",
+    "task"
+  ],
+  "author": "Daniel Hartwell <me@siux.info> (http://siux.info)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/squirrel-forge/node-taskrunner/issues"
+  },
+  "homepage": "https://github.com/squirrel-forge/node-taskrunner#readme",
+  "engines": {
+    "node": ">= 10.0.0"
+  },
+  "dependencies": {
+    "@squirrel-forge/node-objection": "^1.0.0",
+    "@squirrel-forge/node-util": "^0.6.1"
+  }
+}

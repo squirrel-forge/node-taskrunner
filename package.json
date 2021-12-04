@@ -26,7 +26,7 @@
     "node": ">= 10.0.0"
   },
   "dependencies": {
-    "@squirrel-forge/node-objection": "^1.0.0",
+    "@squirrel-forge/node-objection": "^1.0.1",
     "@squirrel-forge/node-util": "^0.6.1"
   }
 }

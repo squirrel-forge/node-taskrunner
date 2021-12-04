@@ -1,0 +1,97 @@
+/**
+ * Requires
+ */
+const { Exception, Timer, strand } = require( '@squirrel-forge/node-util' );
+const { isPojo, cloneObject, mergeObject } = require( '@squirrel-forge/node-objection' );
+
+/**
+ * Task exception
+ * @class
+ */
+class TaskException extends Exception {}
+
+/**
+ * Task class
+ * @abstract
+ * @class
+ */
+class Task {
+
+    /**
+     * Constructor
+     * @constructor
+     * @param {TaskRunner} runner - Runner instance
+     * @param {null|Object} options - Task options object
+     * @param {Object} defaults - Task default options
+     */
+    constructor( runner, options = null, defaults = {} ) {
+
+        // Require task id
+        if ( !defaults.id ) {
+            defaults.id = strand();
+        }
+
+        /**
+         * Timer
+         * @public
+         * @type {Timer}
+         */
+        this.timer = new Timer();
+
+        /**
+         * Runner instance
+         * @public
+         * @property
+         * @type {TaskRunner}
+         */
+        this.runner = runner;
+
+        /**
+         * Options defults
+         * @protected
+         * @property
+         * @type {Object}
+         */
+        this._defaults = defaults;
+
+        /**
+         * Options
+         * @protected
+         * @property
+         * @type {Object}
+         */
+        this._ = cloneObject( this._defaults, true );
+
+        // Apply custom options
+        if ( options && isPojo( options ) ) {
+            mergeObject( this._, options, true, true, true, true );
+        }
+    }
+
+    /**
+     * Generate stats object
+     * @param {Object} data - Stats data
+     * @return {Object} - Stats data
+     */
+    stats( data = {} ) {
+
+        // Force id and set processing time
+        data.id = this._.id;
+        data.time = this.timer.end( 'construct' );
+        return data;
+    }
+
+    /**
+     * Run task
+     * @public
+     * @abstract
+     * @return {Promise<null|Object>} - Null on fail, stats object on success
+     */
+    async run() {
+        throw new TaskException( 'Task must implement a run method' );
+    }
+}
+
+// Export Exception as static property constructor
+Task.TaskException = TaskException;
+module.exports = Task;

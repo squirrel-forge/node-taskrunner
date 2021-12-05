@@ -149,9 +149,20 @@ class TaskRunner {
      */
     async task( taskData ) {
 
+        // Require possible valid type
+        if ( typeof taskData.type !== 'string' || !taskData.type.length ) {
+            this.error( new TaskRunnerException( 'Invalid task type: ' + taskData.type ) );
+            return null;
+        }
+
         // Allow external parser to modify the taskData object
         if ( this._parser ) {
             this._parser( taskData );
+        }
+
+        // Always make sure options are defined
+        if ( !isPojo( taskData.options ) ) {
+            taskData.options = {};
         }
 
         // Use custom id if set, useful when when running the same task type multiple times
@@ -159,10 +170,15 @@ class TaskRunner {
             taskData.options.id = taskData.id;
         }
 
+        // Arguments must always be an array
+        if ( !( taskData.args instanceof Array ) ) {
+            taskData.args = taskData.args ? [ taskData.args ] : [];
+        }
+
         // Get the task constructor
         const TaskConstructor = this.getTaskConstructor( taskData.type );
         if ( !TaskConstructor ) {
-            this.error( new TaskRunnerException( 'Invalid or unknown task type: ' + taskData.type ) );
+            this.error( new TaskRunnerException( 'Unknown task type: ' + taskData.type ) );
             return null;
         }
 

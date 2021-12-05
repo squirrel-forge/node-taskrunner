@@ -12,13 +12,24 @@ npm i @squirrel-forge/node-taskrunner
 ## Usage
 
 ```
-const { TaskRunner, Task } = require( '@squirrel-forge/node-taskrunner' );
+const { Task, TaskRunner } = require( '@squirrel-forge/node-taskrunner' );
 ```
 
 ### Classes
 
- - TaskRunner
- - Task
+ - Task( runner, options, defaults )
+   - runner : TaskRunner
+   - timer : Timer
+   - stats( obj )
+   - run()
+ - TaskRunner( strict, notify, parser )
+   - error( exception )
+   - register( name, constructor, replace )
+   - getTaskConstructor( name )
+   - parallel( array )
+   - sequence( obj )
+   - task( data )
+   - run( map )
 
 ## Docs
 

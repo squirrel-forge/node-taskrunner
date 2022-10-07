@@ -110,33 +110,44 @@ class TaskRunner {
     /**
      * Run tasks in parallel
      * @public
-     * @param {Array<Task|TaskMap>} taskMap - Task map
-     * @return {Promise<Object[]>} - Array of nulls and stats objects
+     * @param {Object.<string, Task|TaskMap>} taskMap - Task map
+     * @return {Promise<Object.<*>>} - Array of nulls and stats objects
      */
-    parallel( taskMap ) {
-        const tasks = [];
+    async parallel( taskMap ) {
+        if ( !isPojo( taskMap ) || typeof taskMap.type === 'string' ) {
+            this.error( new TaskRunnerException( 'Invalid parallel type: ' + typeof taskMap ) );
+            return {};
+        }
 
         // Run in parallel and collect promises
-        for ( let i = 0; i < taskMap.length; i++ ) {
-            tasks.push( this.run( taskMap[ i ] ) );
+        const tasks = [];
+        const stats = {};
+        const entries = Object.entries( taskMap );
+        for ( let i = 0; i < entries.length; i++ ) {
+            const [ name, value ] = entries[ i ];
+            stats[ name ] = this.run( value );
+            tasks.push( stats[ name ] );
         }
-        return Promise.all( tasks );
+        await Promise.all( tasks );
+        return stats;
     }
 
     /**
      * Run tasks in sequence
      * @public
-     * @param {Object} taskMap - Task map
-     * @return {Promise<Object>} - Object of nulls and stats objects
+     * @param {Array} taskMap - Task map
+     * @return {Promise<Array<*>>} - Object of nulls and stats objects
      */
     async sequence( taskMap ) {
-        const stats = {};
-        const entries = Object.entries( taskMap );
+        if ( !( taskMap instanceof Array ) ) {
+            this.error( new TaskRunnerException( 'Invalid sequence type: ' + typeof taskMap ) );
+            return [];
+        }
 
         // Process each map/task in order
-        for ( let i = 0; i < entries.length; i++ ) {
-            const [ name, value ] = entries[ i ];
-            stats[ name ] = await this.run( value );
+        const stats = [];
+        for ( let i = 0; i < taskMap.length; i++ ) {
+            stats[ i ] = await this.run( taskMap[ i ] );
         }
         return stats;
     }
@@ -210,9 +221,9 @@ class TaskRunner {
     async run( taskMap ) {
         let stats;
 
-        // Arrays are run in parallel, order does not matter
+        // Arrays are run in sequence, array order matters
         if ( taskMap instanceof Array ) {
-            stats = await this.parallel( taskMap );
+            stats = await this.sequence( taskMap );
         } else if ( isPojo( taskMap ) ) {
 
             // Assume it's a task if it has a type property
@@ -220,8 +231,8 @@ class TaskRunner {
                 stats = await this.task( taskMap );
             } else {
 
-                // All other objects are assumed sequence maps and are processed in order
-                stats = await this.sequence( taskMap );
+                // All other objects are assumed to be parallel maps
+                stats = await this.parallel( taskMap );
             }
         } else {
 

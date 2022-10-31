@@ -11,7 +11,30 @@ const { isPojo } = require( '@squirrel-forge/node-objection' );
 class TaskRunnerException extends Exception {}
 
 /**
- * @typedef {Object|Array} TaskMap
+ * @typedef {Array<TaskData|TaskList|TaskMap>} TaskList
+ */
+
+/**
+ * @typedef {Object<string,TaskData|TaskList|TaskMap>} TaskMap
+ */
+
+/**
+ * @typedef {Object} TaskData
+ * @property {string} type - Task type name
+ * @property {Object} options - Task options
+ * @property {Array} args - Task arguments
+ */
+
+/**
+ * @typedef {Function} TaskRunnerNotify
+ * @param {Error|Exception} msg - Error or exception instance
+ * @return {void}
+ */
+
+/**
+ * @typedef {Function} TaskParser
+ * @param {TaskData} data - Task data object
+ * @return {void}
  */
 
 /**
@@ -24,8 +47,8 @@ class TaskRunner {
      * Constructor
      * @constructor
      * @param {boolean} strict - Strict mode, default: true
-     * @param {Function} notify - Notification callback for non strict mode
-     * @param {Function} taskParser - Parses task data before processing
+     * @param {TaskRunnerNotify} notify - Notification callback for non strict mode
+     * @param {TaskParser} taskParser - Parses task data before processing
      */
     constructor( strict = true, notify = null, taskParser = null ) {
 
@@ -65,8 +88,8 @@ class TaskRunner {
     /**
      * Throw or notify on error
      * @public
-     * @param {TaskRunnerException} err - Exception instance
-     * @throws {TaskRunnerException|TaskException}
+     * @param {Error|Exception} err - Exception instance
+     * @throws {Error|Exception|TaskRunnerException|TaskException}
      * @return {void}
      */
     error( err ) {
@@ -78,7 +101,7 @@ class TaskRunner {
      * Register task constructor
      * @public
      * @param {string} name Task type
-     * @param {Function} TaskConstructor - Task constructor
+     * @param {Function|Task} TaskConstructor - Task constructor
      * @param {boolean} replace - Replace existing task constructor
      * @return {void}
      */
@@ -98,7 +121,7 @@ class TaskRunner {
      * Get constructor
      * @public
      * @param {string} name - Task type
-     * @return {null|Function} - Task constructor if available
+     * @return {null|Function|Task} - Task constructor if available
      */
     getTaskConstructor( name ) {
         if ( this._types[ name ] ) {
@@ -110,8 +133,8 @@ class TaskRunner {
     /**
      * Run tasks in parallel
      * @public
-     * @param {Object.<string, Task|TaskMap>} taskMap - Task map
-     * @return {Promise<Object.<*>>} - Array of nulls and stats objects
+     * @param {TaskList} taskList - Task list
+     * @return {Promise<Array<null|TaskStatsObject>>} - Array of nulls and stats objects
      */
     async parallel( taskMap ) {
         if ( !isPojo( taskMap ) || typeof taskMap.type === 'string' ) {
@@ -135,8 +158,8 @@ class TaskRunner {
     /**
      * Run tasks in sequence
      * @public
-     * @param {Array} taskMap - Task map
-     * @return {Promise<Array<*>>} - Object of nulls and stats objects
+     * @param {TaskMap} taskMap - Task map
+     * @return {Promise<Object<string,TaskStatsObject>>} - Object of nulls and stats objects
      */
     async sequence( taskMap ) {
         if ( !( taskMap instanceof Array ) ) {
@@ -155,13 +178,13 @@ class TaskRunner {
     /**
      * Construct and run task
      * @public
-     * @param {Object} taskData - Task data object
-     * @return {Promise<null|Object>} - Null or stats object
+     * @param {TaskData} taskData - Task data object
+     * @return {Promise<null|TaskStatsObject>} - Null or stats object
      */
     async task( taskData ) {
 
-        // Require possible valid type
-        if ( typeof taskData.type !== 'string' || !taskData.type.length ) {
+        // Require object and possible valid type
+        if ( !taskData || typeof taskData !== 'object' || typeof taskData.type !== 'string' || !taskData.type.length ) {
             this.error( new TaskRunnerException( 'Invalid task type: ' + taskData.type ) );
             return null;
         }
@@ -215,11 +238,11 @@ class TaskRunner {
     /**
      * Run task map
      * @public
-     * @param {TaskMap} taskMap - Task map
-     * @return {Promise<any[]|null|Object>} - Null, stats object or Array/Object map of nulls and stats objects
+     * @param {TaskList|TaskMap|TaskData} taskInput - Task input
+     * @return {Promise<null|Array<null|TaskStatsObject>|Object<string,null|TaskStatsObject>>} - Null on error, stats object or Array/Object map of nulls and stats objects
      */
-    async run( taskMap ) {
-        let stats;
+    async run( taskInput ) {
+        let stats = null;
 
         // Arrays are run in sequence, array order matters
         if ( taskMap instanceof Array ) {
@@ -227,8 +250,8 @@ class TaskRunner {
         } else if ( isPojo( taskMap ) ) {
 
             // Assume it's a task if it has a type property
-            if ( taskMap.type ) {
-                stats = await this.task( taskMap );
+            if ( taskInput.type ) {
+                stats = await this.task( taskInput );
             } else {
 
                 // All other objects are assumed to be parallel maps
@@ -237,7 +260,7 @@ class TaskRunner {
         } else {
 
             // If we have invalid data we might break
-            this.error( new TaskRunnerException( 'Invalid taskMap type: ' + typeof taskMap ) );
+            this.error( new TaskRunnerException( 'Invalid taskInput type: ' + typeof taskInput ) );
             return null;
         }
 

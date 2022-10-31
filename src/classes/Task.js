@@ -11,6 +11,12 @@ const { isPojo, cloneObject, mergeObject } = require( '@squirrel-forge/node-obje
 class TaskException extends Exception {}
 
 /**
+ * @typedef {Object} TaskStatsObject
+ * @property {string} id - Task id
+ * @property {Array<number,number>} time - Process hrtime
+ */
+
+/**
  * Task class
  * @abstract
  * @class
@@ -21,7 +27,7 @@ class Task {
      * Constructor
      * @constructor
      * @param {TaskRunner} runner - Runner instance
-     * @param {null|Object} options - Task options object
+     * @param {null|TaskData.options} options - Task options object
      * @param {Object} defaults - Task default options
      */
     constructor( runner, options = null, defaults = {} ) {
@@ -70,8 +76,8 @@ class Task {
 
     /**
      * Generate stats object
-     * @param {Object} data - Stats data
-     * @return {Object} - Stats data
+     * @param {Object|TaskStatsObject} data - Stats data
+     * @return {TaskStatsObject} - Stats data
      */
     stats( data = {} ) {
 
@@ -85,7 +91,8 @@ class Task {
      * Run task
      * @public
      * @abstract
-     * @return {Promise<null|Object>} - Null on fail, stats object on success
+     * @throws TaskException
+     * @return {Promise<null|TaskStatsObject>} - Null on fail, stats object on success
      */
     async run() {
         throw new TaskException( 'Task must implement a run method' );

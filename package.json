@@ -1,6 +1,6 @@
 {
   "name": "@squirrel-forge/node-taskrunner",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Task runner and task class for sequential and parallel processing",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "node": ">= 10.0.0"
   },
   "dependencies": {
-    "@squirrel-forge/node-objection": "^1.0.0",
-    "@squirrel-forge/node-util": "^1.0.0"
+    "@squirrel-forge/node-objection": "^1.0.1",
+    "@squirrel-forge/node-util": "^1.3.0"
   }
 }
